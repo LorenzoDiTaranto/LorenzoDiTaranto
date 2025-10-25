@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Barça Fantasy Trip — giocosa (custom)</title>
+  <style>
+    *{box-sizing:border-box}
+    :root{--bg:#0a0f1e; --panel:#121836; --card:#1a2252; --text:#f3f6ff; --muted:#9aa4bd; --accent:#7cf2ff; --accent-2:#aaf8ff; --ok:#9bffb0; --danger:#ff6b88; --gold:#ffd76b; --shadow:0 14px 40px rgba(0,0,0,.38); --radius:16px}
+    body{margin:0; color:var(--text); font:16px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:radial-gradient(1200px 600px at 20% -10%, #26308c 0%, transparent 40%), radial-gradient(1200px 800px at 120% 0%, #8f2aff33 0%, transparent 40%), linear-gradient(#070a17, #0a0f1e); min-height:100vh}
+    header{position:sticky; top:0; z-index:20; padding:12px 14px; background:rgba(10,15,30,.72); border-bottom:1px solid rgba(255,255,255,.08); backdrop-filter: blur(10px); display:flex; align-items:center; justify-content:space-between; gap:12px}
+    .brand{display:flex; align-items:center; gap:10px}
+    .logo{font-size:26px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+    h1{font-size:1.25rem; margin:0}
+    .subtitle{margin:2px 0 0; color:var(--muted); font-size:.9rem}
+    .actions .btn{margin-left:.4rem}
+    main{max-width:1100px; margin:0 auto; padding:16px; display:grid; gap:14px; grid-template-columns:1fr}
+    .panel{background:var(--panel); border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); box-shadow:var(--shadow); padding:12px}
+    .inline-form{display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; margin-bottom:10px}
+    .inline-form label{display:flex; flex-direction:column; gap:4px}
+    .inline-form input, .inline-form select{background:var(--card); color:var(--text); border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:.65rem .75rem; min-width:180px}
+    .btn{background:var(--accent); color:#03141a; border:0; border-radius:12px; padding:.65rem 1rem; font-weight:700; cursor:pointer}
+    .btn.ghost{background:transparent; color:var(--accent-2); border:1px dashed rgba(255,255,255,.2)}
+    .btn.danger{background:transparent; color:var(--danger); border:1px solid rgba(255,255,255,.2)}
+    .players-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:10px}
+    .player-card{background:var(--card); border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:8px; display:flex; gap:10px; align-items:center}
+    .player-card img{width:60px; height:60px; object-fit:cover; border-radius:14px}
+    .player-card .meta{flex:1}
+    .player-card .meta b{display:block}
+    .player-card .meta small{color:var(--muted)}
+    .categories-list{display:grid; gap:8px}
+    .category-item{display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--card); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:8px}
+    .category-item .tag{padding:.2rem .5rem; border-radius:999px; background:#0f1640; border:1px solid rgba(255,255,255,.12); font-size:.85rem}
+    .tabs{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px}
+    .tab{padding:.45rem .75rem; border-radius:999px; border:1px solid rgba(255,255,255,.16); cursor:pointer; background:#11194a}
+    .tab.active{background:var(--gold); color:#3b2a00; border-color:transparent; font-weight:800}
+    .scoring-board{display:grid; gap:8px}
+    .score-row{display:grid; grid-template-columns: 1.2fr repeat(4, 1fr); gap:6px; background:var(--card); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:8px; align-items:center}
+    .name{font-weight:800}
+    .cell{display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+    .badge{display:inline-flex; align-items:center; gap:6px; background:#0e1542; border:1px solid rgba(255,255,255,.12); padding:.3rem .55rem; border-radius:999px; font-size:.9rem}
+    .badge .plus{background:var(--ok); color:#032212; border:0; padding:.15rem .45rem; border-radius:8px; cursor:pointer}
+    .badge .minus{background:var(--danger); color:#2a0309; border:0; padding:.15rem .45rem; border-radius:8px; cursor:pointer}
+    .badge .ptsTag{opacity:.8}
+    .leaderboard{counter-reset:rank; list-style:none; padding:0; margin:0; display:grid; gap:6px}
+    .leaderboard li{counter-increment:rank; background:var(--card); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:8px; display:flex; justify-content:space-between; align-items:center; gap:10px}
+    .leaderboard li::before{content: counter(rank) "."; color:var(--accent-2); font-weight:900}
+    .pts{font-variant-numeric:tabular-nums}
+    .hint{color:var(--muted); font-size:.9rem}
+    footer{padding:22px 12px; text-align:center; color:var(--muted)}
+    @media(min-width:1020px){main{grid-template-columns:1.2fr 1fr} #leaderboardPanel{grid-column:2/3; grid-row:1/3} #missionsPanel{grid-column:1/3}}
+    .shake{animation:shake .35s linear} @keyframes shake{0%{transform:translateX(0)}25%{transform:translateX(-4px)}50%{transform:translateX(3px)}75%{transform:translateX(-2px)}100%{transform:translateX(0)}}
+    .confetti{position:fixed; inset:0; pointer-events:none; overflow:hidden}
+    .confetti i{position:absolute; width:6px; height:10px; background:var(--gold); top:-20px; opacity:.9; transform:rotate(15deg)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">🎉✈️🏟️</div>
+      <div>
+        <h1>Barça Fantasy Trip</h1>
+        <p class="subtitle">Versione giocosa con le tue categorie personalizzate</p>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="btnExport" class="btn" title="Esporta dati">Esporta</button>
+      <button id="btnImport" class="btn ghost" title="Importa dati">Importa</button>
+      <input id="importFile" type="file" accept="application/json" style="display:none" />
+      <button id="btnReset" class="btn danger" title="Azzera tutto">Reset</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel" id="playersPanel">
+      <h2>Giocatori</h2>
+      <form id="playerForm" class="inline-form">
+        <label><span>Nome</span><input id="playerName" type="text" placeholder="Es. Marta" required /></label>
+        <label class="file"><span>Foto</span><input id="playerPhoto" type="file" accept="image/*" /></label>
+        <button type="submit" class="btn">Aggiungi</button>
+      </form>
+      <div id="playersGrid" class="players-grid"></div>
+    </section>
+
+    <section class="panel" id="categoriesPanel">
+      <h2>Categorie & Punteggi</h2>
+      <details open class="hint"><summary>Preset Barcellona</summary>
+        Categorie allegre con bonus e malus. Modificale o aggiungi le tue.
+      </details>
+      <form id="categoryForm" class="inline-form">
+        <label><span>Categoria</span><input id="categoryName" type="text" placeholder="Es. Perdere l’aereo ✈️❌" required /></label>
+        <label><span>Punti (positivi o negativi)</span><input id="categoryPoints" type="number" step="1" value="5" required /></label>
+        <button type="submit" class="btn">Aggiungi</button>
+      </form>
+      <div id="categoriesList" class="categories-list"></div>
+    </section>
+
+    <section class="panel" id="matchdayPanel">
+      <h2>Giornate</h2>
+      <form id="dayForm" class="inline-form">
+        <label><span>Data</span><input id="dayDate" type="date" /></label>
+        <label><span>Nome</span><input id="dayName" type="text" placeholder="Es. Arrivo, Tapas Run, Gaudí Day" /></label>
+        <button type="submit" class="btn">Crea giornata</button>
+      </form>
+      <div id="daysTabs" class="tabs"></div>
+      <div id="scoringBoard" class="scoring-board"></div>
+    </section>
+
+    <section class="panel" id="leaderboardPanel">
+      <h2>Classifica</h2>
+      <label class="inline-form"><span>Vista</span>
+        <select id="boardScope">
+          <option value="total">Totale</option>
+          <option value="day">Per giornata attiva</option>
+        </select>
+      </label>
+      <ol id="leaderboard" class="leaderboard"></ol>
+    </section>
+
+    <section class="panel" id="missionsPanel">
+      <h2>Missioni del giorno</h2>
+      <div class="inline-form"><button id="btnNewMissions" class="btn">Nuove missioni</button></div>
+      <ul id="missionsList" class="missions"></ul>
+      <p class="hint">Spunti: Sagrada Família, Casa Batlló, Parc Güell, La Boqueria, El Born, Barceloneta, Bunkers del Carmel, Montjuïc, Camp Nou, Tibidabo.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>I dati restano nel tuo browser (LocalStorage). Buon divertimento 😄</p>
+  </footer>
+
+  <div class="confetti" id="confetti" aria-hidden="true"></div>
+
+  <script>
+  (function(){
+    const $ = s => document.querySelector(s);
+    const KEY = "barcaFantasyTrip.v3.fun";
+    const S = { players:[], categories:[], days:[], scores:{}, missionsPool:[
+      "Selfie epico alla Sagrada Família 📸",
+      "Tapas crawl di 3 bar 🥘",
+      "Bunkers del Carmel al tramonto 🌇",
+      "Drago di Gaudí trovato 🐉",
+      "Bagno alla Barceloneta 🏖️",
+      "Montjuïc + funivia 🚠",
+      "Street art nel Raval 🎨",
+      "Vista dal Tibidabo 🎡",
+      "Camp Nou tour ⚽",
+      "Churros con cioccolata 🍩",
+      "Vermut in El Born 🍷",
+      "Mosaico di Miró a La Rambla 🎭",
+      // richieste specifiche anche tra le missioni
+      "Navetta da 4 per 11 🚌",
+      "Cantare nella Sagrada Família a tutto volume 🎤⛪",
+      "Giocare a briscola in ascensore 🃏🛗"
+    ]};
+
+    const defaultCategories = [
+      {name:"Gaudí Spotter 🐉", pts:5},
+      {name:"Scopritore di tapas 🥘", pts:3},
+      {name:"Re/Regina delle foto 📸", pts:2},
+      {name:"Night Owl (discoteche) 🦉", pts:4},
+      {name:"Metro Master 🚇", pts:2},
+      {name:"Puntuale di ferro ⏱️", pts:2},
+      {name:"Catalano basic (bon dia!) 🗣️", pts:2},
+      {name:"Cultura (musei/mostre) 🖼️", pts:3},
+      {name:"Spiaggia & sport 🏄", pts:3},
+      {name:"Perdere l’aereo ✈️❌", pts:-50},
+      {name:"Ritardo mostruoso ⌛", pts:-5},
+      {name:"Dimenticare il passaporto 🪪❌", pts:-20},
+      {name:"Uscire senza chiavi 🔑😅", pts:-3},
+      // richieste specifiche
+      {name:"Navetta da 4 per 11 🚌", pts:4},
+      {name:"Cantare nella Sagrada Família a tutto volume 🎤⛪", pts:-10},
+      {name:"Giocare a briscola in ascensore 🃏🛗", pts:2}
+    ];
+
+    const confetti = document.getElementById('confetti');
+    const playerForm = document.getElementById('playerForm');
+    const playerName = document.getElementById('playerName');
+    const playerPhoto = document.getElementById('playerPhoto');
+    const playersGrid = document.getElementById('playersGrid');
+
+    const categoryForm = document.getElementById('categoryForm');
+    const categoryName = document.getElementById('categoryName');
+    const categoryPoints = document.getElementById('categoryPoints');
+    const categoriesList = document.getElementById('categoriesList');
+
+    const dayForm = document.getElementById('dayForm');
+    const dayDate = document.getElementById('dayDate');
+    const dayName = document.getElementById('dayName');
+    const daysTabs = document.getElementById('daysTabs');
+    const scoringBoard = document.getElementById('scoringBoard');
+
+    const boardScope = document.getElementById('boardScope');
+    const leaderboard = document.getElementById('leaderboard');
+
+    function save(){ localStorage.setItem(KEY, JSON.stringify(S)); }
+    function load(){ try{ const raw = localStorage.getItem(KEY); if(!raw) return; Object.assign(S, JSON.parse(raw)); }catch(e){} }
+    function uid(){ return Math.random().toString(36).slice(2,10); }
+
+    function ensurePresets(){
+      if(S.categories.length===0){ defaultCategories.forEach(c=>S.categories.push({id:uid(), ...c})); }
+      if(S.days.length===0){ const iso = new Date().toISOString().slice(0,10); S.days.push({id:uid(), dateISO:iso, name:"Giornata 1"}); }
+    }
+
+    function getActiveDayIndex(){ const i = parseInt(localStorage.getItem(KEY+".activeDayIndex")||"0",10); return Math.max(0, Math.min(i, S.days.length-1)); }
+    function setActiveDayIndex(i){ localStorage.setItem(KEY+".activeDayIndex", String(i)); renderDays(); renderScoringBoard(); renderLeaderboard(); }
+    function getActiveDay(){ return S.days[getActiveDayIndex()]; }
+
+    function getCount(dayId, playerId, catId){ return (((S.scores[dayId]||{})[playerId]||{})[catId])||0; }
+    function addScore(dayId, playerId, catId, delta){
+      S.scores[dayId] = S.scores[dayId] || {};
+      S.scores[dayId][playerId] = S.scores[dayId][playerId] || {};
+      const cur = S.scores[dayId][playerId][catId] || 0;
+      const next = Math.max(0, cur + delta);
+      S.scores[dayId][playerId][catId] = next;
+      save();
+      renderScoringBoard();
+      renderLeaderboard();
+      const cat = S.categories.find(c=>c.id===catId);
+      if(!cat) return;
+      if(cat.pts>0 && delta>0) splashConfetti();
+      if(cat.pts<0 && delta>0) shakeBoard();
+    }
+
+    function splashConfetti(){
+      for(let i=0;i<24;i++){
+        const p=document.createElement('i');
+        p.style.left=Math.random()*100+'%';
+        p.style.background=['#ffd76b','#7cf2ff','#9bffb0','#ff6b88'][Math.floor(Math.random()*4)];
+        p.style.transition='transform 1s ease, opacity 1s ease';
+        confetti.appendChild(p);
+        requestAnimationFrame(()=>{
+          p.style.transform=`translateY(${window.innerHeight+40}px) rotate(${Math.random()*360}deg)`;
+          p.style.opacity='0';
+        });
+        setTimeout(()=>p.remove(), 1100);
+      }
+    }
+    function shakeBoard(){ scoringBoard.classList.add('shake'); setTimeout(()=> scoringBoard.classList.remove('shake'), 400); }
+
+    function renderPlayers(){
+      playersGrid.innerHTML='';
+      S.players.forEach(p=>{
+        const card=document.createElement('div'); card.className='player-card';
+        const img=document.createElement('img'); img.src=p.photoDataUrl||''; img.alt=p.name;
+        const meta=document.createElement('div'); meta.className='meta'; meta.innerHTML=`<b>${p.name}</b><small>ID: ${p.id}</small>`;
+        const rm=document.createElement('button'); rm.className='btn ghost'; rm.textContent='Rimuovi'; rm.onclick=()=>removePlayer(p.id);
+        card.append(img, meta, rm); playersGrid.append(card);
+      });
+    }
+    function renderCategories(){
+      categoriesList.innerHTML='';
+      S.categories.forEach(c=>{
+        const item=document.createElement('div'); item.className='category-item';
+        const left=document.createElement('div');
+        const ptsTag=document.createElement('span'); ptsTag.className='tag'; ptsTag.textContent=(c.pts>0?'+':'')+c.pts+' pt';
+        left.innerHTML=`<b>${c.name}</b>`; left.append(' ', ptsTag);
+        const rm=document.createElement('button'); rm.className='btn ghost'; rm.textContent='Rimuovi'; rm.onclick=()=>removeCategory(c.id);
+        item.append(left, rm); categoriesList.append(item);
+      });
+    }
+    function renderDays(){
+      daysTabs.innerHTML='';
+      S.days.forEach((d,i)=>{
+        const tab=document.createElement('button'); tab.className='tab'+(i===getActiveDayIndex()? ' active':'');
+        tab.textContent=d.name||d.dateISO; tab.title=d.dateISO; tab.onclick=()=>setActiveDayIndex(i);
+        daysTabs.append(tab);
+      });
+    }
+    function renderScoringBoard(){
+      scoringBoard.innerHTML=''; const dayId=getActiveDay().id;
+      S.players.forEach(p=>{
+        const row=document.createElement('div'); row.className='score-row';
+        const name=document.createElement('div'); name.className='name'; name.textContent=p.name; row.append(name);
+        S.categories.slice(0,4).forEach(c=>{ row.append(makeBadgeCell(dayId, p.id, c)); });
+        if(S.categories.length>4){ const more=document.createElement('div'); more.className='cell'; const b=document.createElement('button'); b.className='btn ghost'; b.textContent='Altre…'; b.onclick=()=>openAllCategories(dayId,p.id); more.append(b); row.append(more); }
+        scoringBoard.append(row);
+      });
+    }
+    function makeBadgeCell(dayId, playerId, c){
+      const cell=document.createElement('div'); cell.className='cell';
+      const badge=document.createElement('span'); badge.className='badge';
+      const count=getCount(dayId, playerId, c.id);
+      badge.innerHTML=`${c.name} <span class='ptsTag'>(${(c.pts>0?'+':'')+c.pts})</span> · <b>${count}</b>`;
+      const plus=document.createElement('button'); plus.className='plus'; plus.textContent='+'; plus.onclick=()=>addScore(dayId, playerId, c.id, +1);
+      const minus=document.createElement('button'); minus.className='minus'; minus.textContent='–'; minus.onclick=()=>addScore(dayId, playerId, c.id, -1);
+      badge.append(plus, minus); cell.append(badge); return cell;
+    }
+    function openAllCategories(dayId, playerId){
+      const wrap=document.createElement('div'); wrap.style.position='fixed'; wrap.style.inset='0'; wrap.style.background='rgba(0,0,0,.6)'; wrap.style.display='grid'; wrap.style.placeItems='center'; wrap.style.zIndex='9999';
+      const modal=document.createElement('div'); modal.style.background='#0f1540'; modal.style.border='1px solid rgba(255,255,255,.15)'; modal.style.borderRadius='16px'; modal.style.padding='14px'; modal.style.width='min(620px,92vw)';
+      modal.innerHTML='<h3>Tutte le categorie</h3>';
+      S.categories.forEach(c=>{
+        const row=document.createElement('div'); row.style.display='flex'; row.style.justifyContent='space-between'; row.style.alignItems='center'; row.style.padding='.45rem 0';
+        const left=document.createElement('div'); left.innerHTML=`<b>${c.name}</b> <small style="color:#9aa4bd">(${(c.pts>0?'+':'')+c.pts} pt)</small>`;
+        const right=document.createElement('div');
+        const bMinus=document.createElement('button'); bMinus.className='btn danger'; bMinus.textContent='–'; bMinus.onclick=()=>{ addScore(dayId, playerId, c.id, -1); modal.remove(); openAllCategories(dayId, playerId); };
+        const bCount=document.createElement('span'); bCount.textContent=' '+getCount(dayId, playerId, c.id)+' ';
+        const bPlus=document.createElement('button'); bPlus.className='btn'; bPlus.textContent='+'; bPlus.onclick=()=>{ addScore(dayId, playerId, c.id, +1); modal.remove(); openAllCategories(dayId, playerId); };
+        right.append(bMinus,bCount,bPlus); row.append(left,right); modal.append(row);
+      });
+      const close=document.createElement('button'); close.className='btn ghost'; close.textContent='Chiudi'; close.style.marginTop='.8rem'; close.onclick=()=>wrap.remove();
+      modal.append(close); wrap.append(modal); document.body.append(wrap);
+    }
+
+    function computePoints(scope){
+      const map=new Map();
+      if(scope==='total'){
+        S.days.forEach(d=>{ S.players.forEach(p=>{ let tot=0; S.categories.forEach(c=>{ const cnt=getCount(d.id,p.id,c.id); tot += cnt*c.pts; }); map.set(p.id,(map.get(p.id)||0)+tot); }); });
+      }else{
+        const d=getActiveDay(); S.players.forEach(p=>{ let tot=0; S.categories.forEach(c=>{ const cnt=getCount(d.id,p.id,c.id); tot += cnt*c.pts; }); map.set(p.id,tot); });
+      }
+      return map;
+    }
+    function renderLeaderboard(){
+      const scope=document.getElementById('boardScope').value; const map=computePoints(scope);
+      const rows=S.players.map(p=>({player:p, pts:map.get(p.id)||0})).sort((a,b)=>b.pts-a.pts);
+      leaderboard.innerHTML='';
+      rows.forEach(r=>{
+        const li=document.createElement('li');
+        const left=document.createElement('div'); left.style.display='flex'; left.style.alignItems='center'; left.style.gap='8px';
+        const img=document.createElement('img'); img.src=r.player.photoDataUrl||''; img.alt=r.player.name; img.width=28; img.height=28; img.style.borderRadius='8px'; img.style.objectFit='cover';
+        const name=document.createElement('b'); name.textContent=r.player.name; left.append(img,name);
+        const right=document.createElement('div'); const pts=document.createElement('span'); pts.className='pts'; pts.textContent=r.pts+' pt'; right.append(pts);
+        li.append(left,right); leaderboard.append(li);
+      });
+    }
+
+    function removePlayer(id){ S.players=S.players.filter(p=>p.id!==id); Object.keys(S.scores).forEach(dayId=>{ if(S.scores[dayId] && S.scores[dayId][id]) delete S.scores[dayId][id];}); save(); renderPlayers(); renderLeaderboard(); }
+    function removeCategory(id){ S.categories=S.categories.filter(c=>c.id!==id); Object.keys(S.scores).forEach(dayId=>{ Object.keys(S.scores[dayId]||{}).forEach(pid=>{ if(S.scores[dayId][pid] && S.scores[dayId][pid][id]!=null) delete S.scores[dayId][pid][id]; });}); save(); renderCategories(); renderLeaderboard(); }
+
+    document.getElementById('boardScope').addEventListener('change', renderLeaderboard);
+    playerForm.addEventListener('submit', async e=>{ e.preventDefault(); const name=playerName.value.trim(); if(!name) return; let photo=''; const f=playerPhoto.files[0]; if(f) photo=await fileToDataURL(f); S.players.push({id:uid(), name, photoDataUrl:photo}); playerName.value=''; playerPhoto.value=''; save(); renderPlayers(); renderScoringBoard(); renderLeaderboard(); });
+    categoryForm.addEventListener('submit', e=>{ e.preventDefault(); const name=categoryName.value.trim(); const pts=parseInt(categoryPoints.value,10)||0; if(!name) return; S.categories.push({id:uid(), name, pts}); categoryName.value=''; categoryPoints.value='5'; save(); renderCategories(); renderScoringBoard(); renderLeaderboard(); });
+    dayForm.addEventListener('submit', e=>{ e.preventDefault(); const iso=document.getElementById('dayDate').value||new Date().toISOString().slice(0,10); const nm=document.getElementById('dayName').value.trim()||('Giornata '+(S.days.length+1)); S.days.push({id:uid(), dateISO:iso, name:nm}); document.getElementById('dayDate').value=''; document.getElementById('dayName').value=''; save(); renderDays(); setActiveDayIndex(S.days.length-1); renderScoringBoard(); renderLeaderboard(); });
+
+    document.getElementById('btnExport').addEventListener('click', ()=>{ const data=JSON.stringify(S,null,2); const blob=new Blob([data],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='barca-fantasy-trip.json'; a.click(); URL.revokeObjectURL(url); });
+    document.getElementById('btnImport').addEventListener('click', ()=>document.getElementById('importFile').click());
+    document.getElementById('importFile').addEventListener('change', async ()=>{ const f=document.getElementById('importFile').files[0]; if(!f) return; try{ const data=JSON.parse(await f.text()); if(!data.players||!data.categories||!data.days) throw new Error('Formato non valido'); Object.assign(S,data); save(); renderAll(); alert('Dati importati ✔️'); }catch(e){ alert('Import fallito: '+e.message);} finally{ document.getElementById('importFile').value=''; } });
+    document.getElementById('btnReset').addEventListener('click', ()=>{ if(confirm('Sicuro di voler azzerare tutto?')){ localStorage.removeItem(KEY); localStorage.removeItem(KEY+'.activeDayIndex'); location.reload(); }});
+    document.getElementById('btnNewMissions').addEventListener('click', ()=>{ const todays=pickRandom(S.missionsPool,5); document.getElementById('missionsList').innerHTML=''; todays.forEach(m=>{ const li=document.createElement('li'); li.textContent='• '+m; document.getElementById('missionsList').append(li); }); });
+
+    function fileToDataURL(file){ return new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(file); }); }
+    function pickRandom(arr,n){ const copy=arr.slice(); const out=[]; while(out.length<Math.min(n,copy.length)){ const i=Math.floor(Math.random()*copy.length); out.push(copy.splice(i,1)[0]); } return out; }
+    function renderAll(){ renderPlayers(); renderCategories(); renderDays(); renderScoringBoard(); renderLeaderboard(); }
+
+    load(); ensurePresets(); renderAll();
+  })();
+  </script>
+</body>
+</html>
